@@ -34,11 +34,11 @@ def versailles_weather_tool(visit_date: str) -> str:
         visit_date: Visit date in YYYY-MM-DD format or 'today'
 
     Returns:
-        Weather information and visit recommendations for Versailles
+        JSON weather data for LLM to interpret and format appropriately
     """
     try:
         if not WEATHER_AVAILABLE:
-            return "❌ Weather service not available. Please check your OPENWEATHER_API_KEY in .env file."
+            return '{"status": "error", "error": "Weather service not available. Please check your OPENWEATHER_API_KEY in .env file."}'
 
         # Handle 'today' input
         if visit_date.lower() == 'today':
@@ -47,36 +47,18 @@ def versailles_weather_tool(visit_date: str) -> str:
         print(f"🌤️ Getting weather for Versailles on {visit_date}")
         result = get_versailles_weather(visit_date)
 
-        if result["status"] == "success":
-            if result.get("forecast_type") == "current":
-                weather = result["weather"]
-                return f"""🌤️ Weather for Versailles today ({result['visit_date']}):
-🌡️ Temperature: {weather['temperature']}°C (feels like {weather['feels_like']}°C)
-☁️ Conditions: {weather['description']}
-💨 Wind: {weather['wind_speed']} m/s
-💧 Humidity: {weather['humidity']}%
-👁️ Visibility: {weather['visibility']} km
-
-🏰 Visit recommendations:
-- Gardens: {"🌧️ Bring an umbrella" if "rain" in weather['description'].lower() else "🌞 Great weather for outdoor visit"}
-- Château: Interior visits are comfortable (18-20°C)
-"""
-            else:
-                forecast = result["forecast"]
-                return f"""📅 Weather forecast for Versailles on {result['visit_date']} ({result['days_until_visit']} days from now):
-🌡️ Temperature: {forecast['min_temp']}°C - {forecast['max_temp']}°C
-☁️ Conditions: {forecast['main_condition']}
-📊 Based on {forecast['forecasts_count']} detailed forecasts
-
-🏰 Visit recommendations:
-- Plan accordingly for {forecast['main_condition'].lower()} conditions
-- Check weather closer to your visit date for updates
-"""
-        else:
-            return f"❌ {result.get('error', 'Unable to get weather data')}"
+        # Return the raw JSON data for LLM to interpret
+        import json
+        return json.dumps(result, ensure_ascii=False)
 
     except Exception as e:
-        return f"❌ Error getting weather: {str(e)}"
+        error_result = {
+            "status": "error",
+            "error": f"Error getting weather: {str(e)}",
+            "visit_date": visit_date
+        }
+        import json
+        return json.dumps(error_result, ensure_ascii=False)
 
 
 class SimplifiedVersaillesAgent:
@@ -162,44 +144,39 @@ class SimplifiedVersaillesAgent:
             if tool_calls and WEATHER_AVAILABLE:
                 print(f"🛠️ LLM requested {len(tool_calls)} tool calls")
 
-                # Execute tool calls
-                tool_results = []
+                # Execute tool calls and create tool messages
+                tool_messages = []
                 for tool_call in tool_calls:
                     try:
                         print(f"🔧 Executing: {tool_call['name']} with args: {tool_call['args']}")
 
                         if tool_call['name'] == 'versailles_weather_tool':
                             result = versailles_weather_tool.invoke(tool_call['args'])
-                            tool_results.append({
-                                "tool_call": tool_call,
-                                "result": result
-                            })
+
+                            # Create a tool message with the result
+                            from langchain_core.messages import ToolMessage
+                            tool_messages.append(ToolMessage(
+                                content=result,
+                                tool_call_id=tool_call['id']
+                            ))
                             print(f"✅ Weather tool executed successfully")
-                        else:
-                            tool_results.append({
-                                "tool_call": tool_call,
-                                "error": f"Unknown tool: {tool_call['name']}"
-                            })
 
                     except Exception as e:
                         print(f"❌ Tool execution failed: {e}")
-                        tool_results.append({
-                            "tool_call": tool_call,
-                            "error": str(e)
-                        })
+                        from langchain_core.messages import ToolMessage
+                        tool_messages.append(ToolMessage(
+                            content=f"Error: {str(e)}",
+                            tool_call_id=tool_call['id']
+                        ))
 
                 # Generate final response with tool results
-                if tool_results and tool_results[0].get("result"):
-                    # Use the actual weather data instead of template response
-                    final_response = tool_results[0]["result"]
-                else:
-                    final_response = response.content
+                final_messages = messages + [response] + tool_messages
+                final_response = self.llm.invoke(final_messages)
 
                 return {
-                    "response": final_response,
-                    "messages": messages + [response],
+                    "response": final_response.content,
+                    "messages": final_messages + [final_response],
                     "tools_used": tool_calls,
-                    "tool_results": tool_results,
                     "status": "success"
                 }
 
