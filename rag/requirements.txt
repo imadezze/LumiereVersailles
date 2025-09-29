@@ -1,0 +1,8 @@
+# RAG System Requirements (API + Optional Local)
+huggingface_hub>=0.19.0
+chromadb>=0.4.15
+python-dotenv>=1.0.0
+
+# Optional: For local model support (uncomment if needed)
+sentence-transformers>=2.2.2
+torch>=2.0.0
