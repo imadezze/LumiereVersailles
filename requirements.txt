@@ -10,6 +10,7 @@ flask
 # LangGraph and LangChain dependencies
 langgraph>=0.6.7
 langchain-openai>=0.2.0
+langchain-mistralai>=0.2.0
 langchain-core>=0.3.0
 # MCP integration
-langchain-mcp-adapters
+langchain-mcp-adapters>=0.1.0

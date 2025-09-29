@@ -24,8 +24,8 @@ def test_mcp_agent_integration():
     print("=" * 50)
 
     # Check environment
-    if not os.getenv("OPENAI_API_KEY"):
-        print("❌ OPENAI_API_KEY not found")
+    if not os.getenv("MISTRAL_API_KEY"):
+        print("❌ MISTRAL_API_KEY not found")
         return False
 
     if not os.getenv("OPENWEATHER_API_KEY"):

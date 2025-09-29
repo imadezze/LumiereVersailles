@@ -4,11 +4,11 @@ Core agent implementation for Versailles Weather Agent with MCP integration
 import re
 from datetime import datetime, date
 from typing import Dict, Any, Optional, List
-from langchain_openai import ChatOpenAI
+from langchain_mistralai import ChatMistralAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 
-from ..config.settings import OPENAI_CONFIG, get_full_system_prompt
+from ..config.settings import MISTRAL_CONFIG, get_full_system_prompt
 from .state import AgentState
 
 # MCP integration
@@ -26,12 +26,11 @@ class VersaillesWeatherAgent:
     """
 
     def __init__(self):
-        """Initialize the agent with OpenAI model and MCP tools"""
-        self.llm = ChatOpenAI(
-            model=OPENAI_CONFIG["model"],
-            api_key=OPENAI_CONFIG["api_key"],
-            temperature=OPENAI_CONFIG["temperature"],
-            max_tokens=OPENAI_CONFIG["max_tokens"],
+        """Initialize the agent with Mistral model and MCP tools"""
+        self.llm = ChatMistralAI(
+            model=MISTRAL_CONFIG["model"],
+            api_key=MISTRAL_CONFIG["api_key"],
+            temperature=MISTRAL_CONFIG["temperature"],
         )
 
         # Initialize MCP client for weather tools

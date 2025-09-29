@@ -17,7 +17,13 @@ OPENAI_CONFIG = {
     "model": os.getenv("OPENAI_MODEL", "gpt-4"),
     "api_key": os.getenv("OPENAI_API_KEY"),
     "temperature": float(os.getenv("OPENAI_TEMPERATURE", "0.1")),
-    "max_tokens": int(os.getenv("OPENAI_MAX_TOKENS", "1000")),
+}
+
+# Mistral AI configuration
+MISTRAL_CONFIG = {
+    "model": os.getenv("MISTRAL_MODEL", "mistral-medium-2508"),
+    "api_key": os.getenv("MISTRAL_API_KEY"),
+    "temperature": float(os.getenv("MISTRAL_TEMPERATURE", "0.1")),
 }
 
 # Agent configuration
@@ -57,6 +63,7 @@ def validate_config() -> Dict[str, bool]:
     """Validate configuration settings"""
     validation = {
         "openai_api_key": bool(OPENAI_CONFIG["api_key"]),
+        "mistral_api_key": bool(MISTRAL_CONFIG["api_key"]),
         "weather_api_key": bool(WEATHER_CONFIG["api_key"]),
         "prompts_exist": all(p.exists() for p in PROMPT_FILES.values()),
     }
