@@ -137,13 +137,27 @@ async def get_conversation(conversation_id: str):
 @app.delete("/conversation/{conversation_id}")
 async def delete_conversation(conversation_id: str):
     """
-    Clear conversation history
+    Clear conversation history (both backend storage and agent memory)
     """
+    # Clear backend conversation storage
     if conversation_id in conversations:
         del conversations[conversation_id]
-        return {"message": "Conversation deleted"}
-    else:
-        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    # Clear agent's internal conversation history
+    try:
+        agent.clear_conversation_history()
+        return {
+            "message": "Conversation deleted and agent history cleared",
+            "conversation_id": conversation_id,
+            "status": "success"
+        }
+    except Exception as e:
+        return {
+            "message": "Backend conversation deleted, but failed to clear agent history",
+            "conversation_id": conversation_id,
+            "error": str(e),
+            "status": "partial_success"
+        }
 
 @app.get("/health")
 async def health_check():

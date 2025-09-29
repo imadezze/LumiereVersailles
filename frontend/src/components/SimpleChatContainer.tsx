@@ -9,6 +9,7 @@ const SimpleChatContainer: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking');
+  const [isClearingConversation, setIsClearingConversation] = useState(false);
   const [conversationId] = useState(() => `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -108,6 +109,39 @@ Je peux vous renseigner sur :
     setInput(suggestion);
   };
 
+  const handleNewConversation = async () => {
+    if (isClearingConversation) return; // Prevent double clicks
+
+    setIsClearingConversation(true);
+
+    try {
+      // Call backend to clear conversation history (both backend storage and agent memory)
+      await chatApi.clearConversation(conversationId);
+      console.log('🔄 New conversation started - Backend and agent history cleared');
+    } catch (error) {
+      console.warn('Failed to clear backend conversation:', error);
+      // Continue anyway - frontend still gets cleared
+    }
+
+    // Clear all messages and show welcome message
+    const welcomeMessage: Message = {
+      id: Date.now().toString(),
+      content: `Bonjour ! Je suis votre assistant pour le Château de Versailles. Comment puis-je vous aider à planifier votre visite ?
+
+Je peux vous renseigner sur :
+• La météo et les conditions de visite 🌤️
+• Les itinéraires et temps de trajet 🗺️
+• Les différents moyens de transport 🚌🚗🚴‍♂️
+• Les billets et tarifs
+• Les recommandations selon votre profil`,
+      isUser: false,
+      timestamp: new Date()
+    };
+
+    setMessages([welcomeMessage]);
+    setIsClearingConversation(false);
+  };
+
   const suggestions = [
     "Quel temps fait-il à Versailles aujourd'hui ?",
     "Comment aller à Versailles depuis Paris Gare du Nord ?",
@@ -130,20 +164,31 @@ Je peux vous renseigner sur :
             </div>
           </div>
 
-          <div className="status-indicator">
-            {connectionStatus === 'connected' ? (
-              <>
-                <span className="status-dot status-connected"></span>
-                <span>Connecté</span>
-              </>
-            ) : connectionStatus === 'disconnected' ? (
-              <>
-                <span className="status-dot status-disconnected"></span>
-                <span>Déconnecté</span>
-              </>
-            ) : (
-              <span>Connexion...</span>
-            )}
+          <div className="header-actions">
+            <button
+              onClick={handleNewConversation}
+              className="new-conversation-btn"
+              title="Nouvelle conversation"
+              disabled={isClearingConversation}
+            >
+              {isClearingConversation ? '⏳ Nettoyage...' : '🔄 Nouvelle conversation'}
+            </button>
+
+            <div className="status-indicator">
+              {connectionStatus === 'connected' ? (
+                <>
+                  <span className="status-dot status-connected"></span>
+                  <span>Connecté</span>
+                </>
+              ) : connectionStatus === 'disconnected' ? (
+                <>
+                  <span className="status-dot status-disconnected"></span>
+                  <span>Déconnecté</span>
+                </>
+              ) : (
+                <span>Connexion...</span>
+              )}
+            </div>
           </div>
         </div>
       </div>

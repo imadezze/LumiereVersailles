@@ -28,6 +28,16 @@ export const chatApi = {
     } catch (error) {
       throw new Error('Impossible de se connecter au serveur');
     }
+  },
+
+  clearConversation: async (conversationId: string): Promise<any> => {
+    try {
+      const response = await api.delete(`/conversation/${conversationId}`);
+      return response.data;
+    } catch (error: any) {
+      const apiError: ApiError = error.response?.data || { detail: 'Erreur lors du nettoyage de la conversation' };
+      throw new Error(apiError.detail);
+    }
   }
 };
 
