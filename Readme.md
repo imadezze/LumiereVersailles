@@ -1,60 +1,47 @@
-# ImmoSearch
+# Lumière Versailles
 
-MCP server exposing DVF (Demandes de Valeurs Foncières) analysis tools for French real estate data. This project includes both a powerful MCP server for property analysis and a beautiful conversational UI for apartment viewing reservations.
+MCP server providing weather forecast tools for Palace of Versailles visits. This project includes a powerful MCP server for weather analysis and a LangGraph agent for intelligent weather-based visit planning.
 
 ## Features
 
-- 🏠 **Real Estate Analysis**: DVF data analysis with property search and filtering
-- 🚗 **Travel Time Calculations**: Automatic commute time calculations to workplace
-- 📍 **Location Services**: Reverse geocoding and address lookup
-- 💬 **Conversational UI**: Elegant apartment viewing assistant interface
-- 📊 **Metrics Integration**: W&B integration for analytics and tracing
-- 🌐 **Multiple Interfaces**: Both MCP server and FastAPI web interface
+- 🌤️ **Weather Forecasting**: Detailed weather forecasts for Versailles palace visits
+- 🏰 **Visit Planning**: AI-powered recommendations based on weather conditions
+- 🤖 **LangGraph Agent**: Intelligent agent that decides when to call weather tools
+- 📊 **MCP Integration**: Model Context Protocol server for tool interoperability
+- 🌐 **HTTP Transport**: Streamable HTTP transport for web deployment
 
 ## Project Structure
 
-- `mcp_servers/immosearch_server.py` - Main MCP server for real estate analysis
-- `conversationImmoSearch/` - FastAPI web interface with conversational UI
-- `voiceassistant/` - LiveKit voice assistant integration
-- `scripts/` - Utility scripts for data processing and integrations
+- `mcp_servers/versailles_agent_server.py` - Main MCP server for weather forecasting
+- `agents/core/agent.py` - LangGraph agent with MCP integration
+- `scripts/versailles_weather.py` - Core weather functionality
+- `tests/test_mcp_agent.py` - Test suite for MCP agent integration
 
 ## Running the MCP Server
 
 In order to run your MCP server locally, use the following command:
 
 ```bash
-python -m mcp_servers.immosearch_server
+python mcp_servers/versailles_agent_server.py
 ```
 
-The server will automatically start in **streamable HTTP** mode
+The server will automatically start in **streamable HTTP** mode on port 8001.
 
-## Running the Conversational UI
+## Running the Agent Tests
 
-To run the FastAPI web interface with the apartment viewing assistant:
+To test the LangGraph agent with MCP integration:
 
 ```bash
-cd conversationImmoSearch
-python app.py
+python tests/test_mcp_agent.py
 ```
 
-Then visit `http://localhost:7860` to access the conversational interface.
+This will test both direct MCP server connection and agent integration.
 
 ## Deployment Commands
 
-For deployment platforms (like Hugging Face Spaces), use these commands:
+For deployment platforms, use these commands:
 
-### Using uv (recommended):
-**Install command:**
-```bash
-uv sync --frozen --no-dev
-```
-
-**Start command:**
-```bash
-python mcp_servers/immosearch_server.py
-```
-
-### Using pip (alternative):
+### Using pip:
 **Install command:**
 ```bash
 pip install -r requirements.txt
@@ -62,7 +49,7 @@ pip install -r requirements.txt
 
 **Start command:**
 ```bash
-python mcp_servers/immosearch_server.py
+python mcp_servers/versailles_agent_server.py
 ```
 
 ## Exposing the Server
