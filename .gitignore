@@ -1,9 +1,55 @@
+# Database files
+chroma_db/
 .chroma_db/
-*.pdf
-# Byte-compiled / optimized / DLL files
+*.sqlite3
+
+# Embeddings and vector data
+versailles_embeddings/
+*.bin
+*.pickle
+
+# Virtual environment
+venv/
+env/
+
+# Python cache
 __pycache__/
-*.py[cod]
-*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Data files
+data/other/
+*.jsonl
+
+# Node modules
+node_modules/
+
+# Build directories
+build/
+dist/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.production
+# PDF files
+*.pdf
 # C extensions
 *.so
 
