@@ -22,6 +22,15 @@ except ImportError as e:
     print(f"⚠️ Weather functions not available: {e}")
     WEATHER_AVAILABLE = False
 
+# Import tools from the tools directory
+try:
+    from ..tools.weather_tools import get_all_weather_tools
+    from ..tools.travel_time_tools import get_all_travel_tools
+    TOOLS_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Tools not available: {e}")
+    TOOLS_AVAILABLE = False
+
 from ..config.settings import get_llm_config, get_full_system_prompt
 
 
@@ -88,7 +97,19 @@ class SimplifiedVersaillesAgent:
         print(f"🤖 Using {provider.upper()} LLM: {config['model']}")
 
         # Create tools list
-        self.tools = [versailles_weather_tool] if WEATHER_AVAILABLE else []
+        self.tools = []
+
+        if TOOLS_AVAILABLE:
+            # Add weather tools
+            weather_tools = get_all_weather_tools()
+            self.tools.extend(weather_tools)
+
+            # Add travel time tools
+            travel_tools = get_all_travel_tools()
+            self.tools.extend(travel_tools)
+        elif WEATHER_AVAILABLE:
+            # Fallback to old weather tool
+            self.tools = [versailles_weather_tool]
 
         # Bind tools to LLM
         self.llm_with_tools = self.llm.bind_tools(self.tools)
@@ -100,7 +121,7 @@ class SimplifiedVersaillesAgent:
         self.conversation_history = []
 
         print(f"✅ Simplified Versailles agent initialized")
-        print(f"🌤️ Weather tools: {'Available' if WEATHER_AVAILABLE else 'Unavailable'}")
+        print(f"🛠️ Available tools: {[tool.name for tool in self.tools]}")
         print(f"🛠️ Total tools: {len(self.tools)}")
 
     def clear_conversation_history(self):
@@ -131,7 +152,7 @@ class SimplifiedVersaillesAgent:
             # Check if LLM wants to call tools
             tool_calls = getattr(response, 'tool_calls', [])
 
-            if tool_calls and WEATHER_AVAILABLE:
+            if tool_calls and self.tools:
                 print(f"🛠️ LLM requested {len(tool_calls)} tool calls")
 
                 # Execute tool calls and create tool messages
@@ -140,15 +161,27 @@ class SimplifiedVersaillesAgent:
                     try:
                         print(f"🔧 Executing: {tool_call['name']} with args: {tool_call['args']}")
 
-                        if tool_call['name'] == 'versailles_weather_tool':
-                            result = versailles_weather_tool.invoke(tool_call['args'])
+                        # Find and execute the appropriate tool
+                        tool_executed = False
+                        for tool in self.tools:
+                            if tool.name == tool_call['name']:
+                                result = tool.invoke(tool_call['args'])
 
-                            # Create a tool message with the result
+                                # Create a tool message with the result
+                                tool_messages.append(ToolMessage(
+                                    content=result,
+                                    tool_call_id=tool_call['id']
+                                ))
+                                print(f"✅ Tool '{tool_call['name']}' executed successfully")
+                                tool_executed = True
+                                break
+
+                        if not tool_executed:
+                            print(f"❌ Tool '{tool_call['name']}' not found")
                             tool_messages.append(ToolMessage(
-                                content=result,
+                                content=f"Error: Tool '{tool_call['name']}' not available",
                                 tool_call_id=tool_call['id']
                             ))
-                            print(f"✅ Weather tool executed successfully")
 
                     except Exception as e:
                         print(f"❌ Tool execution failed: {e}")

@@ -288,6 +288,81 @@ body {
   cursor: not-allowed;
 }
 
+/* Tool Usage Indicator Styles */
+.tool-usage-indicator {
+  margin: 0.75rem 0 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 0.75rem;
+  border: 1px solid #dee2e6;
+  font-size: 0.8rem;
+}
+
+.tool-usage-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.tools-icon {
+  font-size: 0.9rem;
+}
+
+.tools-text {
+  font-size: 0.8rem;
+}
+
+.tool-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tool-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #e9ecef;
+  font-size: 0.75rem;
+  color: #495057;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.tool-icon {
+  font-size: 0.8rem;
+}
+
+.tool-name {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.tool-args {
+  color: #6c757d;
+  font-size: 0.7rem;
+  margin-left: 0.25rem;
+}
+
+.message.user .tool-usage-indicator {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.message.user .tool-usage-header,
+.message.user .tool-args {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.message.user .tool-item {
+  background: rgba(255, 255, 255, 0.9);
+}
+
 @media (max-width: 768px) {
   .chat-container {
     height: 100vh;
@@ -304,5 +379,10 @@ body {
 
   .header-title p {
     font-size: 0.8rem;
+  }
+
+  .tool-list {
+    flex-direction: column;
+    gap: 0.25rem;
   }
 }

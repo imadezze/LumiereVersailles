@@ -33,10 +33,16 @@ class ChatRequest(BaseModel):
     message: str
     conversation_id: Optional[str] = None
 
+class ToolUsage(BaseModel):
+    name: str
+    args: Dict[str, Any]
+    execution_time_ms: Optional[int] = None
+
 class ChatResponse(BaseModel):
     reponse: str  # Using French format as required by evaluation
     conversation_id: Optional[str] = None
     status: str = "success"
+    tools_used: Optional[List[ToolUsage]] = None
 
 class EvaluationRequest(BaseModel):
     query: str
@@ -73,10 +79,22 @@ async def chat(request: ChatRequest):
             {"role": "assistant", "content": result["response"]}
         ])
 
+        # Extract tool usage information
+        tools_used = None
+        if result.get("tools_used"):
+            tools_used = [
+                ToolUsage(
+                    name=tool_call.get("name", "unknown_tool"),
+                    args=tool_call.get("args", {})
+                )
+                for tool_call in result["tools_used"]
+            ]
+
         return ChatResponse(
             reponse=result["response"],
             conversation_id=conv_id,
-            status="success"
+            status="success",
+            tools_used=tools_used
         )
 
     except Exception as e:

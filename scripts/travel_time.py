@@ -102,40 +102,65 @@ def get_distance_time(
 
     travel_mode = _map_mode(mode)
 
-    # timezone-aware UTC (required for transit; good for traffic-aware driving)
-    if departure_time is None:
-        departure_time = dt.datetime.now(timezone.utc)
-    elif departure_time.tzinfo is None:
-        departure_time = departure_time.replace(tzinfo=timezone.utc)
-
+    # Build base payload
     payload: Dict[str, Any] = {
         "origin":   {"location": {"latLng": {"latitude": o_lat, "longitude": o_lng}}},
         "destination": {"location": {"latLng": {"latitude": d_lat, "longitude": d_lng}}},
         "travelMode": travel_mode,
-        "departureTime": departure_time.isoformat(),
-        # Optional:
-        # "routingPreference": "TRAFFIC_AWARE",  # for DRIVE
-        # "transitPreferences": {"routingPreference": "LESS_WALKING"},  # for TRANSIT
     }
+
+    # Add mode-specific configurations
+    if travel_mode == "TRANSIT":
+        # Transit requires departure time
+        if departure_time is None:
+            departure_time = dt.datetime.now(timezone.utc) + dt.timedelta(minutes=5)  # 5 minutes from now
+        elif departure_time.tzinfo is None:
+            departure_time = departure_time.replace(tzinfo=timezone.utc)
+
+        payload["departureTime"] = departure_time.isoformat()
+        payload["transitPreferences"] = {"routingPreference": "LESS_WALKING"}
+
+    elif travel_mode == "DRIVE":
+        # For driving, we can optionally include departure time for traffic-aware routing
+        # But we need to be careful with timestamps
+        if departure_time is not None:
+            if departure_time.tzinfo is None:
+                departure_time = departure_time.replace(tzinfo=timezone.utc)
+
+            # Only add departure time if it's in the future
+            now = dt.datetime.now(timezone.utc)
+            if departure_time > now:
+                payload["departureTime"] = departure_time.isoformat()
+                # Can optionally add routing preference for traffic awareness
+                # payload["routingPreference"] = "TRAFFIC_AWARE"
+
+    # For WALK and BICYCLE, don't add departure time as it's not needed/supported
 
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": GOOGLE_API_KEY,
         # Field mask is REQUIRED; list only fields you need
-        "X-Goog-FieldMask": "routes.distanceMeters,routes.duration",
+        "X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.legs.steps.transitDetails,routes.legs.steps.travelMode",
     }
+
+    # Debug logging
+    print(f"🔍 Making request to Google Routes API for mode: {travel_mode}")
+    print(f"📦 Payload keys: {list(payload.keys())}")
 
     with httpx.Client(timeout=30) as client:
         r = client.post(ROUTES_URL, headers=headers, json=payload)
         if r.status_code >= 400:
             try:
                 msg = r.json()
+                print(f"❌ API Error Response: {msg}")
             except Exception:
                 msg = r.text
+                print(f"❌ API Error (text): {msg}")
             raise httpx.HTTPStatusError(f"{r.status_code} {r.reason_phrase}: {msg}",
                                         request=r.request, response=r)
 
         data = r.json()
+        print(f"✅ API Response received for {travel_mode}")
 
     routes = data.get("routes") or []
     if not routes:
@@ -147,7 +172,28 @@ def get_distance_time(
     dur_iso = route.get("duration", "0s")  # e.g., "1234s"
     duration_sec = int(dur_iso[:-1]) if isinstance(dur_iso, str) and dur_iso.endswith("s") else 0
 
-    return {
+    # Extract transit details if available
+    transit_steps = []
+    if travel_mode == "TRANSIT" and "legs" in route:
+        for leg in route["legs"]:
+            if "steps" in leg:
+                for step in leg["steps"]:
+                    if step.get("travelMode") == "TRANSIT" and "transitDetails" in step:
+                        transit_detail = step["transitDetails"]
+                        step_info = {
+                            "mode": transit_detail.get("transitLine", {}).get("vehicle", {}).get("type", "Unknown"),
+                            "line_name": transit_detail.get("transitLine", {}).get("name", ""),
+                            "short_name": transit_detail.get("transitLine", {}).get("nameShort", ""),
+                            "departure_stop": transit_detail.get("departureStop", {}).get("name", ""),
+                            "arrival_stop": transit_detail.get("arrivalStop", {}).get("name", ""),
+                            "color": transit_detail.get("transitLine", {}).get("color", ""),
+                        }
+
+                        # Clean up the step info
+                        if step_info["line_name"] or step_info["short_name"]:
+                            transit_steps.append(step_info)
+
+    result = {
         "origin": {"address": o_fmt, "lat": o_lat, "lng": o_lng},
         "destination": {"address": d_fmt, "lat": d_lat, "lng": d_lng},
         "mode": travel_mode,
@@ -156,6 +202,12 @@ def get_distance_time(
         "duration_min": round(duration_sec / 60.0, 2),
         "status": "OK",
     }
+
+    # Add transit steps if available
+    if transit_steps:
+        result["transit_steps"] = transit_steps
+
+    return result
 
 # Example
 if __name__ == "__main__":

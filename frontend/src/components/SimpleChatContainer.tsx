@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Message } from '../types/chat';
+import { Message, ToolUsage } from '../types/chat';
 import { chatApi } from '../services/api';
+import ToolUsageIndicator from './ToolUsageIndicator';
 
 const SimpleChatContainer: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -27,8 +28,9 @@ const SimpleChatContainer: React.FC = () => {
       content: `Bonjour ! Je suis votre assistant pour le Château de Versailles. Comment puis-je vous aider à planifier votre visite ?
 
 Je peux vous renseigner sur :
-• La météo et les conditions de visite
-• Les itinéraires personnalisés
+• La météo et les conditions de visite 🌤️
+• Les itinéraires et temps de trajet 🗺️
+• Les différents moyens de transport 🚌🚗🚴‍♂️
 • Les billets et tarifs
 • Les recommandations selon votre profil`,
       isUser: false,
@@ -51,13 +53,14 @@ Je peux vous renseigner sur :
     }
   };
 
-  const addMessage = (content: string, isUser: boolean, isError: boolean = false): Message => {
+  const addMessage = (content: string, isUser: boolean, isError: boolean = false, toolsUsed?: ToolUsage[]): Message => {
     const message: Message = {
       id: Date.now().toString() + Math.random(),
       content,
       isUser,
       timestamp: new Date(),
-      isError
+      isError,
+      toolsUsed
     };
 
     setMessages(prev => [...prev, message]);
@@ -86,7 +89,7 @@ Je peux vous renseigner sur :
       // Small delay for better UX
       setTimeout(() => {
         setIsTyping(false);
-        addMessage(response.reponse || 'Réponse reçue', false);
+        addMessage(response.reponse || 'Réponse reçue', false, false, response.tools_used);
       }, 500);
 
     } catch (error: any) {
@@ -107,9 +110,11 @@ Je peux vous renseigner sur :
 
   const suggestions = [
     "Quel temps fait-il à Versailles aujourd'hui ?",
+    "Comment aller à Versailles depuis Paris Gare du Nord ?",
     "Je visite Versailles en famille demain",
-    "Combien coûtent les billets ?",
-    "Quel est le meilleur moment pour visiter ?"
+    "Combien de temps faut-il depuis l'aéroport CDG ?",
+    "Quel est le meilleur moment pour visiter ?",
+    "Comment se rendre à Versailles depuis la Tour Eiffel ?"
   ];
 
   return (
@@ -159,6 +164,9 @@ Je peux vous renseigner sur :
                   </React.Fragment>
                 ))}
               </div>
+              {message.toolsUsed && message.toolsUsed.length > 0 && (
+                <ToolUsageIndicator toolsUsed={message.toolsUsed} />
+              )}
               <div className="message-time">
                 {message.timestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
               </div>
