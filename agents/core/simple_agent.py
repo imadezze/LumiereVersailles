@@ -87,44 +87,6 @@ class SimplifiedVersaillesAgent:
         print(f"🌤️ Weather tools: {'Available' if WEATHER_AVAILABLE else 'Unavailable'}")
         print(f"🛠️ Total tools: {len(self.tools)}")
 
-    def extract_date(self, text: str) -> Optional[str]:
-        """Extract date from user input and convert to YYYY-MM-DD format"""
-        # Common date patterns
-        patterns = [
-            r'\b(\d{4})-(\d{1,2})-(\d{1,2})\b',  # YYYY-MM-DD
-            r'\b(\d{1,2})/(\d{1,2})/(\d{4})\b',  # MM/DD/YYYY
-            r'\b(\d{1,2})-(\d{1,2})-(\d{4})\b',  # MM-DD-YYYY
-        ]
-
-        for pattern in patterns:
-            match = re.search(pattern, text)
-            if match:
-                if pattern == patterns[0]:  # YYYY-MM-DD
-                    year, month, day = match.groups()
-                else:  # MM/DD/YYYY or MM-DD-YYYY
-                    month, day, year = match.groups()
-
-                try:
-                    # Validate and format date
-                    date_obj = datetime(int(year), int(month), int(day)).date()
-                    return date_obj.isoformat()
-                except ValueError:
-                    continue
-
-        # Look for relative dates
-        text_lower = text.lower()
-        today = date.today()
-
-        if 'aujourd\'hui' in text_lower or 'today' in text_lower:
-            return today.isoformat()
-        elif 'demain' in text_lower or 'tomorrow' in text_lower:
-            tomorrow = today + timedelta(days=1)
-            return tomorrow.isoformat()
-        elif 'prochaine' in text_lower or 'next week' in text_lower:
-            next_week = today + timedelta(days=7)
-            return next_week.isoformat()
-
-        return None
 
     def process_query(self, user_input: str) -> Dict[str, Any]:
         """Main method to process a user query"""
