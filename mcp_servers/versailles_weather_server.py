@@ -120,6 +120,12 @@ def get_weather_summary_for_planning(visit_date: str) -> str:
         return f"❌ Error retrieving weather summary: {str(e)}"
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=8001)
+    args = parser.parse_args()
+
     print("🏰 Starting Versailles Weather MCP Server...")
     print("Available tools:")
     print("  - get_versailles_5day_forecast: Detailed 5-day forecast")
@@ -128,5 +134,10 @@ if __name__ == "__main__":
     print("  - get_weather_summary_for_planning: Formatted planning summary")
     print()
 
-    # Run the server
-    mcp.run(transport="stdio")
+    print(f"🔌 HTTP Server starting on http://localhost:{args.port}")
+    print("💡 Use Ctrl+C to stop the server")
+
+    # Set host via settings and use streamable-http transport
+    mcp.settings.host = "127.0.0.1"
+    mcp.settings.port = args.port
+    mcp.run(transport="streamable-http")
