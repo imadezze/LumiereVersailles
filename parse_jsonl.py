@@ -28,10 +28,32 @@ def is_meaningful_text(text: str, min_words: int = 7) -> bool:
     return word_count > min_words
 
 
+def clean_text(text: str) -> str:
+    """
+    Clean text by removing URLs and normalizing whitespace.
+
+    Args:
+        text: Raw text to clean
+
+    Returns:
+        Cleaned text
+    """
+    import re
+
+    # Remove URLs
+    text = re.sub(r'https?://[^\s\)]+', '', text)
+    text = re.sub(r'\([^)]*https?://[^)]*\)', '', text)
+
+    # Clean up extra whitespace and normalize
+    text = ' '.join(text.split())
+
+    return text.strip()
+
+
 def extract_text_from_content(content: Union[Dict, List, str]) -> List[str]:
     """
     Recursively extract meaningful text content from nested JSON structures.
-    Filters out short text content (7 words or less).
+    Filters out short text content (7 words or less) and removes duplicates.
 
     Args:
         content: JSON content (dict, list, or string)
@@ -43,7 +65,7 @@ def extract_text_from_content(content: Union[Dict, List, str]) -> List[str]:
 
     if isinstance(content, str):
         # Direct string - add if meaningful
-        text = content.strip()
+        text = clean_text(content.strip())
         if text and is_meaningful_text(text):
             texts.append(text)
 
@@ -53,20 +75,33 @@ def extract_text_from_content(content: Union[Dict, List, str]) -> List[str]:
 
         # Extract text from text field
         if 'text' in content and content['text']:
-            text = content['text'].strip()
+            text = clean_text(content['text'].strip())
             if is_meaningful_text(text):
                 texts.append(text)
 
-        # Extract text from heading
+        # Extract text from heading (with lower threshold for important headings)
         if content_type == 'heading' and 'text' in content:
-            text = content['text'].strip()
-            if is_meaningful_text(text):
+            text = clean_text(content['text'].strip())
+            # Allow shorter headings if they seem important
+            if text and (is_meaningful_text(text) or len(text.split()) >= 3):
                 texts.append(text)
 
-        # Extract items from lists
+        # Extract items from lists - join list items to avoid fragmentation
         if content_type == 'list' and 'items' in content:
+            list_items = []
             for item in content['items']:
-                texts.extend(extract_text_from_content(item))
+                if isinstance(item, str):
+                    cleaned = clean_text(item.strip())
+                    if cleaned:
+                        list_items.append(cleaned)
+                else:
+                    list_items.extend(extract_text_from_content(item))
+
+            # Join list items if they form meaningful content together
+            if list_items:
+                joined_text = '; '.join(list_items)
+                if is_meaningful_text(joined_text):
+                    texts.append(joined_text)
 
         # Recursively process nested content
         if 'content' in content:
@@ -89,6 +124,29 @@ def extract_text_from_content(content: Union[Dict, List, str]) -> List[str]:
     return texts
 
 
+def deduplicate_texts(text_parts: List[str]) -> List[str]:
+    """
+    Remove duplicate text parts while preserving order.
+
+    Args:
+        text_parts: List of text strings
+
+    Returns:
+        Deduplicated list of text strings
+    """
+    seen = set()
+    result = []
+
+    for text in text_parts:
+        # Create a normalized version for comparison
+        normalized = text.lower().strip()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            result.append(text)
+
+    return result
+
+
 def parse_jsonl_line(line: str) -> Dict[str, str]:
     """
     Parse a single JSONL line and extract URL and concatenated text.
@@ -105,21 +163,26 @@ def parse_jsonl_line(line: str) -> Dict[str, str]:
         # Extract URL
         url = data.get('url', '')
 
-        # Extract title
+        # Extract title and clean it
         title = data.get('title', '')
+        if title:
+            title = clean_text(title)
 
         # Extract all text from content
         content = data.get('content', [])
         text_parts = extract_text_from_content(content)
 
-        # Add title at the beginning if it exists
-        if title:
+        # Add title at the beginning if it exists and is meaningful
+        if title and (is_meaningful_text(title) or len(title.split()) >= 2):
             text_parts.insert(0, title)
 
-        # Join all text parts with spaces
-        full_text = ' '.join(text_parts)
+        # Deduplicate text parts
+        text_parts = deduplicate_texts(text_parts)
 
-        # Clean up extra whitespace
+        # Join all text parts with periods for better readability
+        full_text = '. '.join(text_parts)
+
+        # Final cleanup
         full_text = ' '.join(full_text.split())
 
         return {
@@ -137,8 +200,8 @@ def parse_jsonl_line(line: str) -> Dict[str, str]:
 
 def main():
     """Main function to process the JSONL file."""
-    input_file = "versailles_semantic_complete_20250813_204248.jsonl"
-    output_file = "versailles_concentrated_filtered.jsonl"
+    input_file = "data/versailles_semantic_complete_20250813_204248.jsonl"
+    output_file = "data/versailles_concentrated_clean.jsonl"
 
     processed_count = 0
 
