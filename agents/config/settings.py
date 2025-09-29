@@ -12,6 +12,9 @@ load_dotenv()
 AGENTS_DIR = Path(__file__).parent.parent
 PROMPTS_DIR = AGENTS_DIR / "prompts"
 
+# LLM Provider configuration
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").lower()  # "openai" or "mistral"
+
 # Model configuration
 OPENAI_CONFIG = {
     "model": os.getenv("OPENAI_MODEL", "gpt-4"),
@@ -25,6 +28,13 @@ MISTRAL_CONFIG = {
     "api_key": os.getenv("MISTRAL_API_KEY"),
     "temperature": float(os.getenv("MISTRAL_TEMPERATURE", "0.1")),
 }
+
+def get_llm_config():
+    """Get the appropriate LLM configuration based on environment settings"""
+    if LLM_PROVIDER == "mistral":
+        return "mistral", MISTRAL_CONFIG
+    else:  # default to openai
+        return "openai", OPENAI_CONFIG
 
 # Agent configuration
 AGENT_CONFIG = {

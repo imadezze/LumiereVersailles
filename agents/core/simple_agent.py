@@ -12,7 +12,6 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root / "scripts"))
 
-from langchain_mistralai import ChatMistralAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_core.tools import tool
 
@@ -23,7 +22,7 @@ except ImportError as e:
     print(f"⚠️ Weather functions not available: {e}")
     WEATHER_AVAILABLE = False
 
-from ..config.settings import MISTRAL_CONFIG, get_full_system_prompt
+from ..config.settings import get_llm_config, get_full_system_prompt
 
 
 @tool
@@ -68,11 +67,25 @@ class SimplifiedVersaillesAgent:
 
     def __init__(self):
         """Initialize the agent"""
-        self.llm = ChatMistralAI(
-            model=MISTRAL_CONFIG["model"],
-            api_key=MISTRAL_CONFIG["api_key"],
-            temperature=MISTRAL_CONFIG["temperature"],
-        )
+        # Get LLM configuration
+        provider, config = get_llm_config()
+
+        if provider == "mistral":
+            from langchain_mistralai import ChatMistralAI
+            self.llm = ChatMistralAI(
+                model=config["model"],
+                api_key=config["api_key"],
+                temperature=config["temperature"],
+            )
+        else:  # openai
+            from langchain_openai import ChatOpenAI
+            self.llm = ChatOpenAI(
+                model=config["model"],
+                openai_api_key=config["api_key"],
+                temperature=config["temperature"],
+            )
+
+        print(f"🤖 Using {provider.upper()} LLM: {config['model']}")
 
         # Create tools list
         self.tools = [versailles_weather_tool] if WEATHER_AVAILABLE else []
