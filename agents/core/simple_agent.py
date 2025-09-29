@@ -12,7 +12,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root / "scripts"))
 
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, ToolMessage
 from langchain_core.tools import tool
 
 try:
@@ -62,7 +62,7 @@ def versailles_weather_tool(visit_date: str) -> str:
 
 class SimplifiedVersaillesAgent:
     """
-    Simplified Versailles agent with direct tool integration
+    Simplified Versailles agent with direct tool integration and conversation history
     """
 
     def __init__(self):
@@ -96,19 +96,34 @@ class SimplifiedVersaillesAgent:
         # Load comprehensive Versailles guide prompt
         self.system_prompt = get_full_system_prompt()
 
+        # Initialize conversation history
+        self.conversation_history = []
+
         print(f"✅ Simplified Versailles agent initialized")
         print(f"🌤️ Weather tools: {'Available' if WEATHER_AVAILABLE else 'Unavailable'}")
         print(f"🛠️ Total tools: {len(self.tools)}")
 
+    def clear_conversation_history(self):
+        """Clear the conversation history"""
+        self.conversation_history = []
+        print("🧹 Conversation history cleared")
+
+    def get_conversation_length(self) -> int:
+        """Get the number of messages in conversation history"""
+        return len(self.conversation_history)
 
     def process_query(self, user_input: str) -> Dict[str, Any]:
-        """Main method to process a user query"""
+        """Main method to process a user query with conversation history"""
         try:
-            # Create messages
-            messages = [
-                SystemMessage(content=self.system_prompt),
-                HumanMessage(content=user_input)
-            ]
+            # Create messages starting with system prompt and conversation history
+            messages = [SystemMessage(content=self.system_prompt)]
+
+            # Add conversation history
+            messages.extend(self.conversation_history)
+
+            # Add current user input
+            current_user_message = HumanMessage(content=user_input)
+            messages.append(current_user_message)
 
             # Get response from LLM with tools
             response = self.llm_with_tools.invoke(messages)
@@ -129,7 +144,6 @@ class SimplifiedVersaillesAgent:
                             result = versailles_weather_tool.invoke(tool_call['args'])
 
                             # Create a tool message with the result
-                            from langchain_core.messages import ToolMessage
                             tool_messages.append(ToolMessage(
                                 content=result,
                                 tool_call_id=tool_call['id']
@@ -138,7 +152,6 @@ class SimplifiedVersaillesAgent:
 
                     except Exception as e:
                         print(f"❌ Tool execution failed: {e}")
-                        from langchain_core.messages import ToolMessage
                         tool_messages.append(ToolMessage(
                             content=f"Error: {str(e)}",
                             tool_call_id=tool_call['id']
@@ -148,12 +161,22 @@ class SimplifiedVersaillesAgent:
                 final_messages = messages + [response] + tool_messages
                 final_response = self.llm.invoke(final_messages)
 
+                # Update conversation history (exclude system message)
+                self.conversation_history.append(current_user_message)
+                self.conversation_history.append(response)
+                self.conversation_history.extend(tool_messages)
+                self.conversation_history.append(final_response)
+
                 return {
                     "response": final_response.content,
                     "messages": final_messages + [final_response],
                     "tools_used": tool_calls,
                     "status": "success"
                 }
+
+            # Update conversation history (exclude system message)
+            self.conversation_history.append(current_user_message)
+            self.conversation_history.append(response)
 
             return {
                 "response": response.content,
