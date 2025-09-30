@@ -1,23 +1,22 @@
-# Travel Tool Usage Instructions
+# Travel Tool Usage
 
-## When to Use the Travel Tool
+## When to Use
+**ALWAYS use when location/transportation is mentioned** - Even if not explicitly asked
 
-- User asks about transportation to Versailles
-- User wants to know "how to get to" Palace of Versailles
-- User mentions traveling from a specific location (city, station, hotel, etc.)
-- User asks about travel time or distance
-- User wants to compare different transportation options
+Examples:
+- "I'm visiting from Paris"
+- "How to get there from Gare du Nord"
+- "Travel time from my hotel"
+- "Best way to reach Versailles"
 
-## How to Use the Travel Tool
+## How to Use
 
 1. **Extract the starting location** from the user's request
    - Can be an address, landmark, city name, or "current location"
    - Examples: "Paris Gare du Nord", "Tour Eiffel", "Hotel de Ville Paris"
-
 2. **Call the travel tool** with the origin address
    - The tool automatically compares multiple transportation modes
    - Returns data for transit, driving, walking, and bicycling when available
-
 3. **Interpret and format the results** appropriately
 
 ## Tool Call Format

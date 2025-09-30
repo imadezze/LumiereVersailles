@@ -48,12 +48,14 @@ AGENT_CONFIG = {
 # Prompt file paths
 PROMPT_FILES = {
     "system": PROMPTS_DIR / "system_prompt.md",
+    "system_apitest": PROMPTS_DIR / "system_prompt_apitest.md",
     "weather_tool": PROMPTS_DIR / "weather_tool_prompt.md",
     "travel_tool": PROMPTS_DIR / "travel_tool_prompt.md",
     "rag_tool": PROMPTS_DIR / "rag_tool_prompt.md",
     "web_search_tool": PROMPTS_DIR / "web_search_tool_prompt.md",
     "useful_information": PROMPTS_DIR / "useful_information_prompt.md",
     "user_interaction": PROMPTS_DIR / "user_interaction_prompt.md",
+    "itinerary_preparation": PROMPTS_DIR / "itinerary_preparation_prompt.md",
 }
 
 # Weather API configuration
@@ -85,7 +87,12 @@ def validate_config() -> Dict[str, bool]:
     return validation
 
 def get_full_system_prompt() -> str:
-    """Get the complete system prompt with all instructions"""
+    """Get the complete system prompt with all instructions
+
+    Checks for system_prompt_apitest.md first:
+    - If exists: API test mode (one-shot, no additional questions)
+    - If not: Normal mode with itinerary preparation guidelines
+    """
     from datetime import timedelta
 
     prompts = []
@@ -112,8 +119,19 @@ def get_full_system_prompt() -> str:
     next_weekend_dates = f"{next_saturday.strftime('%B %d')} - {next_sunday.strftime('%B %d, %Y')}"  # e.g., "October 4 - October 5, 2025"
     next_weekend_formatted = f"{next_saturday.strftime('%Y-%m-%d')} and {next_sunday.strftime('%Y-%m-%d')}"  # e.g., "2025-10-04 and 2025-10-05"
 
-    # Load main system prompt and inject dynamic dates
-    system_prompt = load_prompt("system")
+    # Check if API test mode is enabled
+    api_test_mode = PROMPT_FILES["system_apitest"].exists()
+
+    if api_test_mode:
+        # API TEST MODE: Load apitest prompt (one-shot, no questions)
+        print("🔬 API TEST MODE: Using system_prompt_apitest.md")
+        system_prompt = load_prompt("system_apitest")
+    else:
+        # NORMAL MODE: Load standard prompt
+        print("💬 NORMAL MODE: Using system_prompt.md with itinerary preparation")
+        system_prompt = load_prompt("system")
+
+    # Inject dynamic dates
     system_prompt = system_prompt.replace("{current_date}", current_date_formatted)
     system_prompt = system_prompt.replace("{current_day_of_week}", current_day_of_week)
     system_prompt = system_prompt.replace("{tomorrow_date}", tomorrow_date_formatted)
@@ -163,5 +181,13 @@ def get_full_system_prompt() -> str:
     # Add user interaction guidelines
     prompts.append("\n## User Interaction Guidelines")
     prompts.append(load_prompt("user_interaction"))
+
+    # Add itinerary preparation guidelines (ONLY in normal mode)
+    if not api_test_mode:
+        try:
+            prompts.append("\n## Itinerary Preparation Guidelines")
+            prompts.append(load_prompt("itinerary_preparation"))
+        except FileNotFoundError:
+            pass
 
     return "\n".join(prompts)
