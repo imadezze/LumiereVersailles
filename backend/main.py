@@ -1,7 +1,7 @@
 """
 FastAPI backend for Versailles Chatbot
 """
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -9,6 +9,12 @@ from typing import Dict, Any, Optional, List
 import os
 import sys
 from pathlib import Path
+from io import BytesIO
+from elevenlabs.client import ElevenLabs
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Add parent directory to path to import agents
 sys.path.append(str(Path(__file__).parent.parent))
@@ -28,6 +34,10 @@ app.add_middleware(
 
 # Initialize the simplified agent
 agent = SimplifiedVersaillesAgent()
+
+# Initialize ElevenLabs client for Speech-to-Text
+elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
+elevenlabs_client = ElevenLabs(api_key=elevenlabs_api_key) if elevenlabs_api_key else None
 
 class ChatRequest(BaseModel):
     question: str
@@ -49,6 +59,10 @@ class InteractiveChatResponse(BaseModel):
     conversation_id: Optional[str] = None
     status: str = "success"
     tools_used: Optional[List[ToolUsage]] = None
+
+class TranscriptionResponse(BaseModel):
+    transcript: str
+    status: str = "success"
 
 # Store conversations in memory (in production, use a database)
 conversations: Dict[str, List[Dict[str, str]]] = {}
@@ -161,6 +175,57 @@ async def delete_conversation(conversation_id: str):
             "status": "partial_success"
         }
 
+@app.post("/api/transcribe", response_model=TranscriptionResponse)
+async def transcribe_audio(audio: UploadFile = File(...)):
+    """
+    Transcribe audio file using ElevenLabs Speech-to-Text
+    Accepts: audio file (webm, mp3, wav, m4a, etc.)
+    Returns: {"transcript": "text", "status": "success"}
+    """
+    if not elevenlabs_client:
+        raise HTTPException(
+            status_code=503,
+            detail="ElevenLabs API not configured. Please set ELEVENLABS_API_KEY in environment variables."
+        )
+
+    try:
+        # Read audio file content
+        audio_content = await audio.read()
+
+        print(f"📝 Transcribing audio: {len(audio_content)} bytes, type: {audio.content_type}")
+
+        # Wrap audio content in BytesIO for ElevenLabs API
+        audio_file = BytesIO(audio_content)
+        audio_file.name = audio.filename or "recording.webm"
+
+        # Call ElevenLabs Speech-to-Text API
+        # Using the correct parameter name: file (not audio)
+        transcript_response = elevenlabs_client.speech_to_text.convert(
+            file=audio_file,
+            model_id="scribe_v1"  # Current speech-to-text model
+        )
+
+        # Extract transcript text from response object
+        # Response has attributes: text, language_code, language_probability, words
+        transcript_text = transcript_response.text if hasattr(transcript_response, 'text') else str(transcript_response.get("text", ""))
+
+        print(f"✅ Transcription result: '{transcript_text}' (language: {getattr(transcript_response, 'language_code', 'unknown')})")
+
+        if not transcript_text or not transcript_text.strip():
+            raise HTTPException(status_code=400, detail="No speech detected in audio")
+
+        return TranscriptionResponse(
+            transcript=transcript_text,
+            status="success"
+        )
+
+    except Exception as e:
+        print(f"❌ Transcription error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error transcribing audio: {str(e)}"
+        )
+
 @app.get("/health")
 async def health_check():
     """
@@ -169,7 +234,8 @@ async def health_check():
     return {
         "status": "healthy",
         "agent_initialized": agent is not None,
-        "weather_available": hasattr(agent, 'tools') and len(agent.tools) > 0
+        "weather_available": hasattr(agent, 'tools') and len(agent.tools) > 0,
+        "elevenlabs_available": elevenlabs_client is not None
     }
 
 # Serve static files (for frontend)

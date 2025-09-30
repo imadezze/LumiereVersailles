@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Message, ToolUsage } from '../types/chat';
 import { chatApi } from '../services/api';
 import ToolUsageIndicator from './ToolUsageIndicator';
+import VoiceRecorder from './VoiceRecorder';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -193,6 +194,47 @@ const SimpleChatContainer: React.FC = () => {
     setInput(suggestion);
   };
 
+  const handleVoiceTranscript = async (transcript: string) => {
+    if (!transcript.trim() || isLoading) return;
+
+    // Add user message
+    addMessage(transcript, true);
+
+    setIsLoading(true);
+    setIsTyping(true);
+
+    try {
+      const response = await chatApi.sendMessage({
+        message: transcript,
+        conversation_id: conversationId
+      });
+
+      // Small delay for better UX
+      setTimeout(() => {
+        setIsTyping(false);
+        addMessage(response.reponse || 'Réponse reçue', false, false, response.tools_used);
+      }, 500);
+
+    } catch (error: any) {
+      setIsTyping(false);
+      addMessage(
+        error.message || 'Désolé, je rencontre des difficultés techniques. Veuillez réessayer dans quelques instants.',
+        false,
+        true
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVoiceError = (error: string) => {
+    addMessage(
+      `❌ Erreur d'enregistrement vocal : ${error}`,
+      false,
+      true
+    );
+  };
+
   const handleNewConversation = async () => {
     if (isClearingConversation) return; // Prevent double clicks
 
@@ -344,10 +386,15 @@ const SimpleChatContainer: React.FC = () => {
       {/* Input */}
       <div className="chat-input">
         <form onSubmit={handleSendMessage} className="input-group">
+          <VoiceRecorder
+            onTranscript={handleVoiceTranscript}
+            onError={handleVoiceError}
+            disabled={isLoading}
+          />
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Tapez votre question ici..."
+            placeholder="Tapez votre question ou utilisez le micro..."
             disabled={isLoading}
             rows={1}
             maxLength={500}

@@ -51,6 +51,8 @@ PROMPT_FILES = {
     "weather_tool": PROMPTS_DIR / "weather_tool_prompt.md",
     "travel_tool": PROMPTS_DIR / "travel_tool_prompt.md",
     "rag_tool": PROMPTS_DIR / "rag_tool_prompt.md",
+    "web_search_tool": PROMPTS_DIR / "web_search_tool_prompt.md",
+    "useful_information": PROMPTS_DIR / "useful_information_prompt.md",
     "user_interaction": PROMPTS_DIR / "user_interaction_prompt.md",
 }
 
@@ -92,14 +94,40 @@ def get_full_system_prompt() -> str:
     today = date.today()
     tomorrow = today + timedelta(days=1)
 
+    # Calculate next weekend (Saturday-Sunday)
+    # weekday() returns 0=Monday, 1=Tuesday, ..., 6=Sunday
+    days_until_saturday = (5 - today.weekday()) % 7
+    if days_until_saturday == 0:
+        # Today is Saturday, so "this weekend" is today and tomorrow
+        next_saturday = today
+    else:
+        # Calculate next Saturday
+        next_saturday = today + timedelta(days=days_until_saturday if days_until_saturday > 0 else 7)
+
+    next_sunday = next_saturday + timedelta(days=1)
+
     current_date_formatted = today.strftime("%B %d, %Y")  # e.g., "September 30, 2025"
+    current_day_of_week = today.strftime("%A")  # e.g., "Tuesday"
     tomorrow_date_formatted = tomorrow.strftime("%Y-%m-%d")  # e.g., "2025-10-01"
+    next_weekend_dates = f"{next_saturday.strftime('%B %d')} - {next_sunday.strftime('%B %d, %Y')}"  # e.g., "October 4 - October 5, 2025"
+    next_weekend_formatted = f"{next_saturday.strftime('%Y-%m-%d')} and {next_sunday.strftime('%Y-%m-%d')}"  # e.g., "2025-10-04 and 2025-10-05"
 
     # Load main system prompt and inject dynamic dates
     system_prompt = load_prompt("system")
     system_prompt = system_prompt.replace("{current_date}", current_date_formatted)
+    system_prompt = system_prompt.replace("{current_day_of_week}", current_day_of_week)
     system_prompt = system_prompt.replace("{tomorrow_date}", tomorrow_date_formatted)
+    system_prompt = system_prompt.replace("{next_weekend_dates}", next_weekend_dates)
+    system_prompt = system_prompt.replace("{next_weekend_formatted}", next_weekend_formatted)
     prompts.append(system_prompt)
+
+    # Add practical information FIRST - authoritative reference data
+    try:
+        prompts.append("\n## Practical Information & Visit Tips")
+        prompts.append("\n**IMPORTANT: This section contains exact, authoritative information. Always check here FIRST for practical questions (hours, tickets, tips) before using tools.**\n")
+        prompts.append(load_prompt("useful_information"))
+    except FileNotFoundError:
+        pass
 
     # Add tool instructions
     prompts.append("\n## Available Tools")
@@ -108,6 +136,16 @@ def get_full_system_prompt() -> str:
     try:
         prompts.append("\n### Knowledge Base Search")
         prompts.append(load_prompt("rag_tool"))
+    except FileNotFoundError:
+        pass
+
+    # Web search tool (if available)
+    try:
+        prompts.append("\n### Web Search")
+        web_search_prompt = load_prompt("web_search_tool")
+        web_search_prompt = web_search_prompt.replace("{current_date}", current_date_formatted)
+        web_search_prompt = web_search_prompt.replace("{next_weekend_dates}", next_weekend_dates)
+        prompts.append(web_search_prompt)
     except FileNotFoundError:
         pass
 

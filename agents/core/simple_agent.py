@@ -27,6 +27,7 @@ try:
     from ..tools.weather_tools import get_all_weather_tools
     from ..tools.travel_time_tools import get_all_travel_tools
     from ..tools.rag_tools import get_all_rag_tools, initialize_rag_system
+    from ..tools.web_search_tools import get_all_web_search_tools, initialize_web_search
     TOOLS_AVAILABLE = True
 except ImportError as e:
     print(f"⚠️ Tools not available: {e}")
@@ -112,6 +113,16 @@ class SimplifiedVersaillesAgent:
             # Add travel time tools
             travel_tools = get_all_travel_tools()
             self.tools.extend(travel_tools)
+
+            # Add web search tools
+            print("🔧 Initializing web search...")
+            web_search_initialized = initialize_web_search()
+            if web_search_initialized:
+                web_search_tools = get_all_web_search_tools()
+                self.tools.extend(web_search_tools)
+                print(f"✅ Web search ready with {len(web_search_tools)} tools")
+            else:
+                print("⚠️ Web search not available - continuing without it")
 
             # Add RAG tools if initialized successfully
             if rag_initialized:
