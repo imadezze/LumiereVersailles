@@ -186,6 +186,80 @@ body {
   text-align: right;
 }
 
+/* Message links */
+.message-link {
+  color: #3498db;
+  text-decoration: underline;
+  word-break: break-all;
+  transition: color 0.2s;
+}
+
+.message-link:hover {
+  color: #2980b9;
+  text-decoration: underline;
+}
+
+.message.user .message-link {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.message.user .message-link:hover {
+  color: #e8f4f8;
+}
+
+/* Markdown content styling */
+.message-content p:first-child {
+  margin-top: 0;
+}
+
+.message-content p:last-child {
+  margin-bottom: 0;
+}
+
+.message-content ul,
+.message-content ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.message-content li {
+  margin-bottom: 0.25rem;
+}
+
+.message-content strong {
+  font-weight: 600;
+}
+
+.message-content em {
+  font-style: italic;
+}
+
+.message-content code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+}
+
+.message-content h1,
+.message-content h2,
+.message-content h3 {
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.message-content h1 {
+  font-size: 1.25rem;
+}
+
+.message-content h2 {
+  font-size: 1.125rem;
+}
+
+.message-content h3 {
+  font-size: 1rem;
+}
+
 .suggestions {
   margin-bottom: 1rem;
 }
@@ -403,6 +477,16 @@ body {
 
 .tool-item[data-tool-type="knowledge"] .tool-name {
   color: #f57c00;
+}
+
+/* Web search tool specific styling */
+.tool-item[data-tool-type="web-search"] {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%);
+  border-color: #64b5f6;
+}
+
+.tool-item[data-tool-type="web-search"] .tool-name {
+  color: #1976d2;
 }
 
 @media (max-width: 768px) {

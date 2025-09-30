@@ -17,6 +17,8 @@ const ToolUsageIndicator: React.FC<ToolUsageIndicatorProps> = ({ toolsUsed }) =>
       return '🗺️';
     } else if (toolName.includes('knowledge') || toolName.includes('search_versailles')) {
       return '📚';
+    } else if (toolName.includes('web_search') || toolName.includes('search_web')) {
+      return '🔍';
     } else if (toolName.includes('versailles')) {
       return '🏰';
     }
@@ -30,6 +32,8 @@ const ToolUsageIndicator: React.FC<ToolUsageIndicatorProps> = ({ toolsUsed }) =>
       return 'Itinéraire';
     } else if (toolName.includes('knowledge') || toolName.includes('search_versailles')) {
       return 'Base de connaissances';
+    } else if (toolName.includes('web_search') || toolName.includes('search_web')) {
+      return 'Recherche web';
     } else if (toolName.includes('versailles')) {
       return 'Versailles';
     }
@@ -46,7 +50,7 @@ const ToolUsageIndicator: React.FC<ToolUsageIndicatorProps> = ({ toolsUsed }) =>
         if (key === 'origin_address') return `📍 De ${value}`;
         if (key === 'compare_modes') return value ? '🚌🚗🚴‍♂️🚶‍♂️' : '';
         if (key === 'query') return `🔍 "${value}"`;
-        if (key === 'max_results') return `📊 ${value} résultats`;
+        if (key === 'max_results' || key === 'num_results') return `📊 ${value} résultats`;
         return `${key}: ${value}`;
       })
       .filter(Boolean)
@@ -60,6 +64,8 @@ const ToolUsageIndicator: React.FC<ToolUsageIndicatorProps> = ({ toolsUsed }) =>
       return 'weather';
     } else if (toolName.includes('travel')) {
       return 'travel';
+    } else if (toolName.includes('web_search') || toolName.includes('search_web')) {
+      return 'web-search';
     }
     return 'other';
   };

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Message, ToolUsage } from '../types/chat';
 import { chatApi } from '../services/api';
 import ToolUsageIndicator from './ToolUsageIndicator';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const SimpleChatContainer: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -13,6 +15,84 @@ const SimpleChatContainer: React.FC = () => {
   const [conversationId] = useState(() => `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Markdown components factory - determines styling based on message type
+  const getMarkdownComponents = (isUser: boolean) => ({
+    // Make all links open in new tabs with appropriate styling
+    a: ({ node, ...props }: any) => (
+      <a
+        {...props}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={isUser ? 'message-link' : 'message-link'}
+        style={{
+          color: isUser ? '#ffffff' : '#3498db',
+          textDecoration: 'underline',
+          wordBreak: 'break-all'
+        }}
+      />
+    ),
+    // Style lists with appropriate spacing
+    ul: ({ node, ...props }: any) => (
+      <ul {...props} style={{ listStyleType: 'disc', paddingLeft: '1.5rem', margin: '0.5rem 0' }} />
+    ),
+    ol: ({ node, ...props }: any) => (
+      <ol {...props} style={{ listStyleType: 'decimal', paddingLeft: '1.5rem', margin: '0.5rem 0' }} />
+    ),
+    li: ({ node, ...props }: any) => (
+      <li {...props} style={{ marginBottom: '0.25rem' }} />
+    ),
+    // Style paragraphs to avoid excessive spacing
+    p: ({ node, ...props }: any) => (
+      <p {...props} style={{ margin: '0.5rem 0' }} />
+    ),
+    // Style code blocks
+    code: ({ node, inline, ...props }: any) =>
+      inline ? (
+        <code
+          {...props}
+          style={{
+            backgroundColor: isUser ? 'rgba(255, 255, 255, 0.2)' : '#f3f4f6',
+            padding: '0.125rem 0.25rem',
+            borderRadius: '0.25rem',
+            fontSize: '0.875rem',
+            fontFamily: 'monospace'
+          }}
+        />
+      ) : (
+        <code
+          {...props}
+          style={{
+            display: 'block',
+            backgroundColor: isUser ? 'rgba(255, 255, 255, 0.2)' : '#f3f4f6',
+            padding: '0.75rem',
+            borderRadius: '0.25rem',
+            fontSize: '0.875rem',
+            fontFamily: 'monospace',
+            whiteSpace: 'pre-wrap',
+            margin: '0.5rem 0'
+          }}
+        />
+      ),
+    // Style headings if needed
+    h1: ({ node, ...props }: any) => (
+      <h1 {...props} style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: '0.75rem 0' }} />
+    ),
+    h2: ({ node, ...props }: any) => (
+      <h2 {...props} style={{ fontSize: '1.125rem', fontWeight: 'bold', margin: '0.75rem 0' }} />
+    ),
+    h3: ({ node, ...props }: any) => (
+      <h3 {...props} style={{ fontSize: '1rem', fontWeight: 'bold', margin: '0.5rem 0' }} />
+    ),
+    // Style strong/bold
+    strong: ({ node, ...props }: any) => (
+      <strong {...props} style={{ fontWeight: 'bold' }} />
+    ),
+    // Style em/italic
+    em: ({ node, ...props }: any) => (
+      <em {...props} style={{ fontStyle: 'italic' }} />
+    ),
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -30,6 +110,7 @@ const SimpleChatContainer: React.FC = () => {
 
 Je peux vous renseigner sur :
 • L'histoire et les informations sur le château 📚
+• Les événements et actualités en temps réel 🔍
 • La météo et les conditions de visite 🌤️
 • Les itinéraires et temps de trajet 🗺️
 • Les différents moyens de transport 🚌🚗🚴‍♂️
@@ -132,6 +213,7 @@ Je peux vous renseigner sur :
 
 Je peux vous renseigner sur :
 • L'histoire et les informations sur le château 📚
+• Les événements et actualités en temps réel 🔍
 • La météo et les conditions de visite 🌤️
 • Les itinéraires et temps de trajet 🗺️
 • Les différents moyens de transport 🚌🚗🚴‍♂️
@@ -206,12 +288,12 @@ Je peux vous renseigner sur :
             </div>
             <div className="message-bubble">
               <div className="message-content">
-                {message.content.split('\n').map((line, index) => (
-                  <React.Fragment key={index}>
-                    {line}
-                    {index < message.content.split('\n').length - 1 && <br />}
-                  </React.Fragment>
-                ))}
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={getMarkdownComponents(message.isUser)}
+                >
+                  {message.content}
+                </ReactMarkdown>
               </div>
               {message.toolsUsed && message.toolsUsed.length > 0 && (
                 <ToolUsageIndicator toolsUsed={message.toolsUsed} />
