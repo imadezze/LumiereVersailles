@@ -30,6 +30,12 @@ app.add_middleware(
 agent = SimplifiedVersaillesAgent()
 
 class ChatRequest(BaseModel):
+    question: str
+
+class ChatResponse(BaseModel):
+    answer: str
+
+class InteractiveChatRequest(BaseModel):
     message: str
     conversation_id: Optional[str] = None
 
@@ -38,17 +44,11 @@ class ToolUsage(BaseModel):
     args: Dict[str, Any]
     execution_time_ms: Optional[int] = None
 
-class ChatResponse(BaseModel):
-    reponse: str  # Using French format as required by evaluation
+class InteractiveChatResponse(BaseModel):
+    reponse: str  # Using French format
     conversation_id: Optional[str] = None
     status: str = "success"
     tools_used: Optional[List[ToolUsage]] = None
-
-class EvaluationRequest(BaseModel):
-    query: str
-
-class EvaluationResponse(BaseModel):
-    reponse: str  # Required format for evaluation
 
 # Store conversations in memory (in production, use a database)
 conversations: Dict[str, List[Dict[str, str]]] = {}
@@ -60,7 +60,32 @@ async def root():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """
-    Main chat endpoint for interactive conversations
+    Main chat endpoint for evaluation
+    Accepts: {"question": "requête du visiteur"}
+    Returns: {"answer": "réponse complète du chatbot"}
+    """
+    try:
+        # Process the question through the agent
+        result = agent.process_query(request.question)
+
+        if result["status"] == "error":
+            # Return a graceful error message instead of raising exception
+            return ChatResponse(
+                answer="Je m'excuse, mais je rencontre des difficultés techniques. Pourriez-vous reformuler votre question?"
+            )
+
+        return ChatResponse(answer=result["response"])
+
+    except Exception:
+        # Return a graceful error response for evaluation
+        return ChatResponse(
+            answer="Je m'excuse, mais je ne peux pas traiter votre demande en ce moment. Veuillez réessayer plus tard."
+        )
+
+@app.post("/api/chat", response_model=InteractiveChatResponse)
+async def interactive_chat(request: InteractiveChatRequest):
+    """
+    Interactive chat endpoint for frontend with conversation history and tool tracking
     """
     try:
         # Process the message through the agent
@@ -90,7 +115,7 @@ async def chat(request: ChatRequest):
                 for tool_call in result["tools_used"]
             ]
 
-        return ChatResponse(
+        return InteractiveChatResponse(
             reponse=result["response"],
             conversation_id=conv_id,
             status="success",
@@ -100,29 +125,6 @@ async def chat(request: ChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing chat: {str(e)}")
 
-@app.post("/api/evaluate", response_model=EvaluationResponse)
-async def evaluate(request: EvaluationRequest):
-    """
-    Evaluation endpoint for hackathon - expects queries and returns responses
-    This endpoint is designed to work with Ngrok for evaluation
-    """
-    try:
-        # Process the query through the agent
-        result = agent.process_query(request.query)
-
-        if result["status"] == "error":
-            # Return a fallback response instead of error for evaluation
-            response_text = "Je m'excuse, mais je rencontre des difficultés techniques. Pourriez-vous reformuler votre question?"
-        else:
-            response_text = result["response"]
-
-        return EvaluationResponse(reponse=response_text)
-
-    except Exception as e:
-        # Return a graceful error response for evaluation
-        return EvaluationResponse(
-            reponse="Je m'excuse, mais je ne peux pas traiter votre demande en ce moment. Veuillez réessayer plus tard."
-        )
 
 @app.get("/conversation/{conversation_id}")
 async def get_conversation(conversation_id: str):
