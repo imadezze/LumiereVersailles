@@ -7,4 +7,6 @@ python-dotenv
 rich
 ipykernel
 ipywidgets
+langgraph
+"langchain[openai]"
 gradio
