@@ -1,0 +1,18 @@
+[project]
+name = "one-agent-versailles"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "gradio>=5.47.2",
+    "ipykernel>=6.30.1",
+    "ipywidgets>=8.1.7",
+    "json-repair>=0.51.0",
+    "numexpr>=2.13.0",
+    "openai>=1.109.1",
+    "pandas>=2.3.2",
+    "pydantic>=2.11.9",
+    "python-dotenv>=1.1.1",
+    "rich>=14.1.0",
+]
