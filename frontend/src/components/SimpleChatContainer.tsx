@@ -108,15 +108,16 @@ const SimpleChatContainer: React.FC = () => {
       id: Date.now().toString(),
       content: `Bonjour ! Je suis votre assistant pour le Château de Versailles. Comment puis-je vous aider à planifier votre visite ?
 
-Je peux vous renseigner sur :
-• L'histoire et les informations sur le château 📚
-• Les événements et actualités en temps réel 🔍
-• La météo et les conditions de visite 🌤️
-• Les itinéraires et temps de trajet 🗺️
-• Les différents moyens de transport 🚌🚗🚴‍♂️
-• Les billets, tarifs et horaires
-• Les jardins, fontaines et événements
-• Les recommandations selon votre profil`,
+**Je peux vous renseigner sur :**
+
+- 📚 L'histoire et les informations sur le château
+- 🔍 Les événements et actualités en temps réel
+- 🌤️ La météo et les conditions de visite
+- 🗺️ Les itinéraires et temps de trajet
+- 🚌 Les différents moyens de transport
+- 🎫 Les billets, tarifs et horaires
+- 🌳 Les jardins, fontaines et événements
+- ✨ Les recommandations selon votre profil`,
       isUser: false,
       timestamp: new Date()
     };
@@ -211,15 +212,16 @@ Je peux vous renseigner sur :
       id: Date.now().toString(),
       content: `Bonjour ! Je suis votre assistant pour le Château de Versailles. Comment puis-je vous aider à planifier votre visite ?
 
-Je peux vous renseigner sur :
-• L'histoire et les informations sur le château 📚
-• Les événements et actualités en temps réel 🔍
-• La météo et les conditions de visite 🌤️
-• Les itinéraires et temps de trajet 🗺️
-• Les différents moyens de transport 🚌🚗🚴‍♂️
-• Les billets, tarifs et horaires
-• Les jardins, fontaines et événements
-• Les recommandations selon votre profil`,
+**Je peux vous renseigner sur :**
+
+- 📚 L'histoire et les informations sur le château
+- 🔍 Les événements et actualités en temps réel
+- 🌤️ La météo et les conditions de visite
+- 🗺️ Les itinéraires et temps de trajet
+- 🚌 Les différents moyens de transport
+- 🎫 Les billets, tarifs et horaires
+- 🌳 Les jardins, fontaines et événements
+- ✨ Les recommandations selon votre profil`,
       isUser: false,
       timestamp: new Date()
     };
