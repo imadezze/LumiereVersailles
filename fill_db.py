@@ -1,25 +1,28 @@
 import chromadb
-from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
+from chromadb.utils import embedding_functions
 from pathlib import Path
-from docling.document_converter import DocumentConverter
-from docling_core.transforms.chunker import HierarchicalChunker
-from transformers import AutoTokenizer
+from langchain_text_splitters import CharacterTextSplitter
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DATA_PATH = "data/rag_data"
 CHROMA_PATH = "chroma_db"
 
-tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2-7B")
-embedding_function = SentenceTransformerEmbeddingFunction(model_name="sentence-transformers/all-MiniLM-L6-v2")
+gemini_ef = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
+    api_key=os.getenv("GEMINI_API_KEY"),
+    model_name="models/embedding-001"
+)
 
 chroma_client = chromadb.PersistentClient(path=CHROMA_PATH)
 collection = chroma_client.get_or_create_collection(
     name="versailles_docs",
-    embedding_function=embedding_function
+    embedding_function=gemini_ef
 )
 
-converter = DocumentConverter()
-chunker = HierarchicalChunker(tokenizer=tokenizer, merge_peers=True)
+md_splitter = CharacterTextSplitter(separator="##", chunk_size=2000, chunk_overlap=200)
 
 documents = []
 metadata = []
@@ -28,14 +31,17 @@ i = 0
 
 for file_path in Path(DATA_PATH).rglob("*.md"):
     print(f"Processing {file_path}")
-    doc = converter.convert(str(file_path)).document
-    chunks = list(chunker.chunk(dl_doc=doc))
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    chunks = md_splitter.split_text(content)
 
     for chunk in chunks:
-        documents.append(chunk.text)
-        ids.append(f"ID{i}")
-        metadata.append({"source": str(file_path), "type": "markdown"})
-        i += 1
+        if chunk.strip():
+            documents.append(chunk.strip())
+            ids.append(f"ID{i}")
+            metadata.append({"source": str(file_path), "type": "markdown"})
+            i += 1
 
 for file_path in Path(DATA_PATH).rglob("*.jsonl"):
     print(f"Processing {file_path}")
@@ -49,5 +55,12 @@ for file_path in Path(DATA_PATH).rglob("*.jsonl"):
                 metadata.append({"source": str(file_path), "type": "jsonl"})
                 i += 1
 
-collection.upsert(documents=documents, metadatas=metadata, ids=ids)
+batch_size = 50
+for i in range(0, len(documents), batch_size):
+    batch_docs = documents[i:i+batch_size]
+    batch_meta = metadata[i:i+batch_size]
+    batch_ids = ids[i:i+batch_size]
+    collection.upsert(documents=batch_docs, metadatas=batch_meta, ids=batch_ids)
+    print(f"Added batch {i//batch_size + 1}/{(len(documents)-1)//batch_size + 1}")
+
 print(f"Added {len(documents)} chunks to the database")
