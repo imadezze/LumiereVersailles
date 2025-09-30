@@ -26,6 +26,7 @@ except ImportError as e:
 try:
     from ..tools.weather_tools import get_all_weather_tools
     from ..tools.travel_time_tools import get_all_travel_tools
+    from ..tools.rag_tools import get_all_rag_tools, initialize_rag_system
     TOOLS_AVAILABLE = True
 except ImportError as e:
     print(f"⚠️ Tools not available: {e}")
@@ -100,6 +101,10 @@ class SimplifiedVersaillesAgent:
         self.tools = []
 
         if TOOLS_AVAILABLE:
+            # Initialize RAG system
+            print("🔧 Initializing RAG knowledge base...")
+            rag_initialized = initialize_rag_system()
+
             # Add weather tools
             weather_tools = get_all_weather_tools()
             self.tools.extend(weather_tools)
@@ -107,6 +112,15 @@ class SimplifiedVersaillesAgent:
             # Add travel time tools
             travel_tools = get_all_travel_tools()
             self.tools.extend(travel_tools)
+
+            # Add RAG tools if initialized successfully
+            if rag_initialized:
+                rag_tools = get_all_rag_tools()
+                self.tools.extend(rag_tools)
+                print(f"✅ RAG knowledge base ready with {len(rag_tools)} tools")
+            else:
+                print("⚠️ RAG knowledge base not available - continuing without it")
+
         elif WEATHER_AVAILABLE:
             # Fallback to old weather tool
             self.tools = [versailles_weather_tool]

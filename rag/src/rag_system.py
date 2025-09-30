@@ -16,8 +16,8 @@ class VersaillesRAG:
         self.vector_store = VersaillesVectorStore(persist_dir)
         self.processor = DocumentProcessor()
 
-    def build_index(self):
-        """Build the vector index from documents"""
+    def build_index(self, batch_size: int = 100):
+        """Build the vector index from documents, processing in batches"""
         print("🏰 Building Versailles RAG Index...")
 
         # Process documents
@@ -28,23 +28,43 @@ class VersaillesRAG:
             print("❌ No documents found!")
             return
 
-        # Generate embeddings
-        print("🧠 Generating embeddings with Qwen3-Embedding-8B...")
-        texts = [doc["text"] for doc in documents]
-        embeddings = self.embedding_service.embed_texts(texts)
+        total_docs = len(documents)
+        print(f"📊 Total documents to process: {total_docs}")
+        print(f"💾 Processing in batches of {batch_size} (embeddings + storage)")
 
-        # Prepare data for vector store
-        metadatas = [doc["metadata"] for doc in documents]
-        ids = [doc["id"] for doc in documents]
+        # Process documents in batches to save progress incrementally
+        for i in range(0, total_docs, batch_size):
+            batch_end = min(i + batch_size, total_docs)
+            batch_num = (i // batch_size) + 1
+            total_batches = (total_docs + batch_size - 1) // batch_size
 
-        # Store in vector database
-        print("💾 Storing in vector database...")
-        self.vector_store.add_documents(texts, embeddings, metadatas, ids)
+            print(f"\n📦 Batch {batch_num}/{total_batches} (documents {i+1} to {batch_end})")
 
-        # Show statistics
+            # Get batch data
+            batch_docs = documents[i:batch_end]
+            texts = [doc["text"] for doc in batch_docs]
+            metadatas = [doc["metadata"] for doc in batch_docs]
+            ids = [doc["id"] for doc in batch_docs]
+
+            try:
+                # Generate embeddings for this batch
+                print(f"   🧠 Generating {len(texts)} embeddings...")
+                embeddings = self.embedding_service.embed_texts(texts)
+
+                # Store immediately in vector database
+                print(f"   💾 Saving to database...")
+                self.vector_store.add_documents(texts, embeddings, metadatas, ids)
+                print(f"   ✅ Batch {batch_num}/{total_batches} saved successfully!")
+
+            except Exception as e:
+                print(f"   ❌ Error processing batch {batch_num}: {e}")
+                print(f"   ⚠️ Stopping at batch {batch_num}. {i} documents saved so far.")
+                raise
+
+        # Show final statistics
         stats = self.vector_store.get_stats()
-        print(f"✅ Index built successfully!")
-        print(f"📊 Total documents: {stats['total_documents']}")
+        print(f"\n✅ Index built successfully!")
+        print(f"📊 Total documents in database: {stats['total_documents']}")
 
     def query(self, question: str, k: int = 5) -> Dict[str, Any]:
         """Query the RAG system"""
