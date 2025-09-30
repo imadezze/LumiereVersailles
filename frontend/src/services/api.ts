@@ -13,7 +13,7 @@ const api = axios.create({
 export const chatApi = {
   sendMessage: async (request: ChatRequest): Promise<ChatResponse> => {
     try {
-      const response = await api.post<ChatResponse>('/chat', request);
+      const response = await api.post<ChatResponse>('/api/chat', request);
       return response.data;
     } catch (error: any) {
       const apiError: ApiError = error.response?.data || { detail: 'Une erreur est survenue' };

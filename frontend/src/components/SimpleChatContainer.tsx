@@ -29,10 +29,12 @@ const SimpleChatContainer: React.FC = () => {
       content: `Bonjour ! Je suis votre assistant pour le Château de Versailles. Comment puis-je vous aider à planifier votre visite ?
 
 Je peux vous renseigner sur :
+• L'histoire et les informations sur le château 📚
 • La météo et les conditions de visite 🌤️
 • Les itinéraires et temps de trajet 🗺️
 • Les différents moyens de transport 🚌🚗🚴‍♂️
-• Les billets et tarifs
+• Les billets, tarifs et horaires
+• Les jardins, fontaines et événements
 • Les recommandations selon votre profil`,
       isUser: false,
       timestamp: new Date()
@@ -129,10 +131,12 @@ Je peux vous renseigner sur :
       content: `Bonjour ! Je suis votre assistant pour le Château de Versailles. Comment puis-je vous aider à planifier votre visite ?
 
 Je peux vous renseigner sur :
+• L'histoire et les informations sur le château 📚
 • La météo et les conditions de visite 🌤️
 • Les itinéraires et temps de trajet 🗺️
 • Les différents moyens de transport 🚌🚗🚴‍♂️
-• Les billets et tarifs
+• Les billets, tarifs et horaires
+• Les jardins, fontaines et événements
 • Les recommandations selon votre profil`,
       isUser: false,
       timestamp: new Date()
@@ -143,12 +147,12 @@ Je peux vous renseigner sur :
   };
 
   const suggestions = [
+    "Parle-moi de l'histoire du Château de Versailles",
     "Quel temps fait-il à Versailles aujourd'hui ?",
+    "Quels sont les horaires d'ouverture ?",
     "Comment aller à Versailles depuis Paris Gare du Nord ?",
     "Je visite Versailles en famille demain",
-    "Combien de temps faut-il depuis l'aéroport CDG ?",
-    "Quel est le meilleur moment pour visiter ?",
-    "Comment se rendre à Versailles depuis la Tour Eiffel ?"
+    "Quel est le meilleur moment pour visiter ?"
   ];
 
   return (

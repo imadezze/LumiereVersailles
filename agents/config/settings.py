@@ -4,6 +4,7 @@ Configuration settings for the Versailles Weather Agent
 import os
 from pathlib import Path
 from typing import Dict, Any
+from datetime import date
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -48,6 +49,8 @@ AGENT_CONFIG = {
 PROMPT_FILES = {
     "system": PROMPTS_DIR / "system_prompt.md",
     "weather_tool": PROMPTS_DIR / "weather_tool_prompt.md",
+    "travel_tool": PROMPTS_DIR / "travel_tool_prompt.md",
+    "rag_tool": PROMPTS_DIR / "rag_tool_prompt.md",
     "user_interaction": PROMPTS_DIR / "user_interaction_prompt.md",
 }
 
@@ -81,14 +84,43 @@ def validate_config() -> Dict[str, bool]:
 
 def get_full_system_prompt() -> str:
     """Get the complete system prompt with all instructions"""
+    from datetime import timedelta
+
     prompts = []
 
-    # Load main system prompt
-    prompts.append(load_prompt("system"))
+    # Get current date and related dates
+    today = date.today()
+    tomorrow = today + timedelta(days=1)
 
-    # Add weather tool instructions
-    prompts.append("\n## Weather Tool Instructions")
+    current_date_formatted = today.strftime("%B %d, %Y")  # e.g., "September 30, 2025"
+    tomorrow_date_formatted = tomorrow.strftime("%Y-%m-%d")  # e.g., "2025-10-01"
+
+    # Load main system prompt and inject dynamic dates
+    system_prompt = load_prompt("system")
+    system_prompt = system_prompt.replace("{current_date}", current_date_formatted)
+    system_prompt = system_prompt.replace("{tomorrow_date}", tomorrow_date_formatted)
+    prompts.append(system_prompt)
+
+    # Add tool instructions
+    prompts.append("\n## Available Tools")
+
+    # Knowledge base search tool (if available)
+    try:
+        prompts.append("\n### Knowledge Base Search")
+        prompts.append(load_prompt("rag_tool"))
+    except FileNotFoundError:
+        pass
+
+    # Weather tool
+    prompts.append("\n### Weather Information")
     prompts.append(load_prompt("weather_tool"))
+
+    # Travel time tool (if available)
+    try:
+        prompts.append("\n### Travel Time Calculation")
+        prompts.append(load_prompt("travel_tool"))
+    except FileNotFoundError:
+        pass
 
     # Add user interaction guidelines
     prompts.append("\n## User Interaction Guidelines")

@@ -395,6 +395,16 @@ body {
   background: rgba(255, 255, 255, 0.9);
 }
 
+/* Knowledge base / RAG tool specific styling */
+.tool-item[data-tool-type="knowledge"] {
+  background: linear-gradient(135deg, #fff8e1 0%, #fffbf0 100%);
+  border-color: #ffe082;
+}
+
+.tool-item[data-tool-type="knowledge"] .tool-name {
+  color: #f57c00;
+}
+
 @media (max-width: 768px) {
   .chat-container {
     height: 100vh;
