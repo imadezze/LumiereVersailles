@@ -14,5 +14,8 @@ langgraph>=0.6.7
 langchain-openai>=0.2.0
 langchain-mistralai>=0.2.0
 langchain-core>=0.3.0
+langchain-linkup>=0.1.0
 # MCP integration
 langchain-mcp-adapters>=0.1.0
+# ElevenLabs for Speech-to-Text
+elevenlabs>=1.0.0

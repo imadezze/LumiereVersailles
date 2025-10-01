@@ -1,23 +1,18 @@
-# Weather Tool Usage Instructions
+# Weather Tool Usage
 
-## When to Use the Weather Tool
-- User asks about weather for a specific date
-- User wants to plan a visit and needs weather information
-- User asks about weather conditions at Versailles
+## When to Use
+- User mentions a specific visit date: "tomorrow", "samedi", "next week"
+- User explicitly asks about weather/météo
 
-## How to Use the Weather Tool
-1. Extract the date from the user's request (format: YYYY-MM-DD)
-2. Call the weather tool with the extracted date
-3. Interpret the results in context of visiting Versailles
+## How to Use
+1. Convert date expression to YYYY-MM-DD format
+2. Call: `get_weather_for_versailles_visit(visit_date="YYYY-MM-DD")`
+3. Interpret JSON results for user
 
-## Tool Call Format
-```
-get_weather_for_versailles_visit(visit_date="YYYY-MM-DD")
-```
-
-## Interpreting Results
-- Check the forecast_type to understand data reliability
-- Focus on temperature ranges and main conditions
+## Key Output
+- Temperature (min/max)
+- Conditions (rain, sun, clouds)
+- Visit recommendations based on weather
 - Consider how weather affects outdoor vs indoor activities
 - Note the days_until_visit for accuracy context
 

@@ -1,23 +1,16 @@
-# Knowledge Base Search Tool Instructions
+# RAG Knowledge Base Tool
 
-## search_versailles_knowledge Tool
+## search_versailles_knowledge
 
-You have access to a comprehensive knowledge base containing detailed information about the Palace of Versailles. Use the `search_versailles_knowledge` tool to find accurate, up-to-date information about:
+**Comprehensive knowledge base with 4700+ entries about Versailles**
 
-### When to Use This Tool
-
-**THIS IS YOUR PRIMARY TOOL - Use it FIRST for ANY Versailles question!**
-
-**ALWAYS search the knowledge base BEFORE any other tool** when users ask about:
-
-1. **Palace Information**
-   - History, architecture, and construction
-   - Rooms, halls, and apartments (Hall of Mirrors, King's Apartments, etc.)
-   - Art collections and decorations
-   - Opening hours and ticket information
-
-2. **Gardens and Grounds**
-   - Garden layout and design
+### When to Use
+Use for ANY detailed question about Versailles:
+- History, architecture, rooms, art
+- Gardens, fountains, Trianon
+- Tickets, prices, hours, passes
+- Events, shows, activities
+- Visitor advice and recommendations
    - Fountains and water features (Musical Fountains Shows, Musical Gardens)
    - Trianon estates (Grand Trianon, Petit Trianon, Queen's Hamlet)
    - Outdoor spaces and sculptures

@@ -93,7 +93,7 @@ Les jardins ferment à 18h30 (évacuation à partir de 18h).
 Ouvert aux piétons tous les jours
 Accès par la porte du Bourg, la grille Deux portes, la grille Royale, la grille Cœur Volant, la porte du Roi et la porte du Stade de 7h30 à 19h30 (dernière admission à 19h), du 1er avril au 31 octobre, et de 8h à 17h30 du 1er novembre au 31 mars.
 
-### Les Jardins
+### Visite des Jardins
 Ouverts tous les jours, de 7h à 20h30
 Dernier accès : 19h sauf météo exceptionnelle (neige, vents violents…).
 Fermeture anticipée des jardins à 17h30 à l’occasion des Grandes Eaux Nocturnes, les samedis du 7 juin au 20 septembre, ainsi que les 26, 28, 29, 30 et 31 octobre.
